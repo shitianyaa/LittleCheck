@@ -1,0 +1,7 @@
+Model preset data: coulsontl/ai-toolbox
+Source: tauri/resources/preset_models.json
+Revision: e6ebf5950b67395667a0dd2fa46f418aeba0b4b5
+https://github.com/coulsontl/ai-toolbox
+License supplied by the source repository: GNU AGPL version 3.
+The unchanged preset data and its license are bundled together.
+Little Check's Flutter implementation is written independently.

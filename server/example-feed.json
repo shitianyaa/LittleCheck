@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-02T08:00:00Z",
+  "items": [
+    {
+      "id": "sample-flutter-20261002",
+      "title": "让信息流回到内容本身",
+      "summary": "每天留一点时间，看看自己关心的事。这里是示例内容，配置你的信息流地址后会自动替换。",
+      "content": "## 留意世界，记下自己\n\n这里可以放 Hermes 按你的主题整理的内容。\n\n- 保留来源和发布时间\n- 用 Markdown 阅读完整摘要\n- 需要留存的内容可以保存为笔记\n\n> 这是一条示例内容。",
+      "source": "Little Check 示例",
+      "url": "https://docs.flutter.dev/",
+      "published_at": "2026-10-02T08:00:00Z",
+      "tags": ["设计", "阅读"]
+    },
+    {
+      "id": "sample-notes-20261002",
+      "title": "把想到的事写下来",
+      "summary": "笔记和待办可以在同一篇 Markdown 里。勾选任务后，原文也会一起更新。",
+      "content": "## 一份简单的清单\n\n保存为笔记后，可以直接勾选：\n\n- [ ] 读完今天的信息流\n- [ ] 记下一个想法\n- [x] 给自己留一点空白\n\n```markdown\n- [ ] 这是代码示例，不是任务\n```",
+      "source": "Little Check 示例",
+      "published_at": "2026-10-02T07:00:00Z",
+      "tags": ["笔记"]
+    }
+  ]
+}

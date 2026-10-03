@@ -1,0 +1,5 @@
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/little_check_startup_mark">
+    <target android:name="ring" android:animation="@animator/startup_ring" />
+    <target android:name="check" android:animation="@animator/startup_check" />
+</animated-vector>

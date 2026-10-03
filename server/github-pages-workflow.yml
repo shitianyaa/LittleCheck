@@ -1,0 +1,56 @@
+# Copy to .github/workflows/publish.yml in a dedicated public repository.
+name: Publish Little Check feeds
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 * * * *'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: little-check-pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Restore recent image cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .image-cache
+          key: feed-images-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: feed-images-
+      - name: Prepare public feeds
+        env:
+          SOURCE: ${{ vars.FEED_SOURCE }}
+          MEDIA_BASE: ${{ vars.FEED_MEDIA_BASE }}
+          PUBLIC_BASE: ${{ vars.PAGES_BASE_URL }}
+        run: |
+          python -B server/export_github_site.py \
+            --source "${SOURCE:-https://feed.hika.cc.cd/feed.json}" \
+            --media-base "${MEDIA_BASE:-https://feed.hika.cc.cd/media}" \
+            --public-base "$PUBLIC_BASE" --output public --cache .image-cache
+      - name: Save recent image cache
+        uses: actions/cache/save@v4
+        with:
+          path: .image-cache
+          key: feed-images-${{ github.run_id }}-${{ github.run_attempt }}
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

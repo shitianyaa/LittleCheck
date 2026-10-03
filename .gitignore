@@ -1,0 +1,27 @@
+.tools/
+.dart_tool/
+.flutter-plugins*
+build/
+android/local.properties
+android/.gradle/
+windows/flutter/ephemeral/
+*.pyc
+__pycache__/
+Progress/
+.idea/
+*.iml
+android/.kotlin/
+LittleCheck-Feed/
+
+# Local collaboration records and historical plans
+AGENTS.md
+AGENTS.local.md
+lesson/
+docs/handoff.md
+docs/design.md
+docs/implementation-draft.md
+docs/model-and-sync-plan.md
+docs/plan-topbar-and-icon.md
+docs/translation-redesign-research.md
+docs/ui-ai-design.md
+docs/private/

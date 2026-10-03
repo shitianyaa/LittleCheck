@@ -1,0 +1,201 @@
+name: Build and release Little Check
+
+on:
+  push:
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: little-check-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  FLUTTER_VERSION: '3.47.6'
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - run: flutter pub get --enforce-lockfile
+      - run: flutter test --no-pub
+      - run: dart format --output=none --set-exit-if-changed lib test
+      - run: flutter analyze --no-pub
+      - run: python -m pip install -r server/requirements.txt
+      - run: python -B -m unittest discover -s server -v
+      - name: Validate release tag
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: python
+        run: |
+          import os, re
+          from pathlib import Path
+          version = re.search(r'^version:\s*(\S+)', Path('pubspec.yaml').read_text(), re.M).group(1).split('+')[0]
+          if os.environ['GITHUB_REF_NAME'] != 'v' + version:
+              raise SystemExit('Release tag must match pubspec.yaml version')
+
+  android:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter pub get --enforce-lockfile
+      - name: Restore fixed signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        shell: python
+        run: |
+          import base64, os
+          from pathlib import Path
+          for key in ('KEYSTORE_BASE64', 'ANDROID_STORE_PASSWORD', 'ANDROID_KEY_ALIAS', 'ANDROID_KEY_PASSWORD'):
+              if not os.environ.get(key):
+                  raise SystemExit('Required Android signing secret is missing: ' + key)
+          path = Path(os.environ['RUNNER_TEMP']) / 'little-check-release.p12'
+          path.write_bytes(base64.b64decode(os.environ['KEYSTORE_BASE64'], validate=True))
+          path.chmod(0o600)
+      - name: Build universal and ARM Android APKs
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/little-check-release.p12
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          flutter build apk --release --target-platform android-arm,android-arm64,android-x64 --no-pub
+          mkdir release
+          cp build/app/outputs/flutter-apk/app-release.apk "release/LittleCheck-${GITHUB_REF_NAME}-android-universal.apk"
+          flutter build apk --release --split-per-abi --target-platform android-arm,android-arm64 --no-pub
+      - name: Package and verify APK architectures
+        shell: python
+        run: |
+          import os, re, shutil, subprocess, zipfile
+          from pathlib import Path
+          prefix = 'LittleCheck-' + os.environ['GITHUB_REF_NAME'] + '-android-'
+          version = re.search(r'^version:\s*(\S+)', Path('pubspec.yaml').read_text(), re.M).group(1)
+          version_name, _, version_code = version.partition('+')
+          expected_package = ('dev.littlecheck.little_check', version_code or '1', version_name)
+          aapt = max(Path(os.environ['ANDROID_HOME']).glob('build-tools/*/aapt'), key=lambda path: path.parent.name)
+          packages = (
+              (Path('release') / (prefix + 'universal.apk'), ('armeabi-v7a', 'arm64-v8a', 'x86_64'), None),
+              (Path('build/app/outputs/flutter-apk/app-arm64-v8a-release.apk'), ('arm64-v8a',), 'arm64-v8a'),
+              (Path('build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk'), ('armeabi-v7a',), 'armeabi-v7a'),
+          )
+          for source, abis, suffix in packages:
+              badging = subprocess.check_output([str(aapt), 'dump', 'badging', str(source)], text=True)
+              package = re.search(r"^package: name='([^']+)' versionCode='([^']+)' versionName='([^']+)'", badging, re.M)
+              if not package or package.groups() != expected_package:
+                  raise SystemExit('Unexpected APK application ID or version: ' + str(source))
+              with zipfile.ZipFile(source) as apk:
+                  names = set(apk.namelist())
+                  actual = {name.split('/')[1] for name in names if name.startswith('lib/') and name.endswith('/libapp.so')}
+                  if actual != set(abis):
+                      raise SystemExit('Unexpected APK architectures: ' + str(source))
+                  for abi in abis:
+                      for library in ('libapp.so', 'libflutter.so'):
+                          if f'lib/{abi}/{library}' not in names:
+                              raise SystemExit('Incomplete APK architecture: ' + abi)
+              if suffix:
+                  shutil.copy2(source, Path('release') / (prefix + suffix + '.apk'))
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: android-release
+          path: release/*.apk
+          if-no-files-found: error
+          retention-days: 1
+      - name: Remove restored signing key
+        if: always()
+        shell: python
+        run: |
+          import os
+          from pathlib import Path
+          (Path(os.environ['RUNNER_TEMP']) / 'little-check-release.p12').unlink(missing_ok=True)
+
+  windows:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: verify
+    runs-on: windows-2025
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter pub get --enforce-lockfile
+      - run: flutter build windows --release --no-pub
+      - name: Package complete Windows x64 bundle
+        shell: pwsh
+        run: |
+          $bundle = 'build/windows/x64/runner/Release'
+          if (!(Test-Path "$bundle/little_check.exe") -or !(Test-Path "$bundle/data")) {
+            throw 'Windows release bundle is incomplete'
+          }
+          $vswhere = "${env:ProgramFiles(x86)}/Microsoft Visual Studio/Installer/vswhere.exe"
+          $vs = & $vswhere -latest -products '*' -property installationPath
+          $crt = Get-ChildItem "$vs/VC/Redist/MSVC" -Directory |
+            Sort-Object Name -Descending |
+            ForEach-Object { Get-ChildItem "$($_.FullName)/x64" -Directory -Filter 'Microsoft.VC*.CRT' -ErrorAction SilentlyContinue } |
+            Select-Object -First 1
+          if (!$crt) { throw 'Visual C++ runtime distribution directory not found' }
+          foreach ($dll in 'msvcp140.dll', 'vcruntime140.dll', 'vcruntime140_1.dll') {
+            Copy-Item -LiteralPath "$($crt.FullName)/$dll" -Destination $bundle
+          }
+          New-Item -ItemType Directory -Force release | Out-Null
+          Compress-Archive -Path "$bundle/*" -DestinationPath "release/LittleCheck-${env:GITHUB_REF_NAME}-windows-x64.zip"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: windows-release
+          path: release/*.zip
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [android, windows]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          pattern: '*-release'
+          merge-multiple: true
+          path: release
+      - name: Generate checksums
+        run: |
+          cd release
+          sha256sum *.apk *.zip > SHA256SUMS.txt
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" --verify-tag \
+            --title "Little Check $GITHUB_REF_NAME" \
+            --notes-file docs/release-notes.md release/*

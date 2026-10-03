@@ -1,0 +1,8 @@
+<resources>
+    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@color/little_check_launch_background</item>
+        <item name="android:windowSplashScreenBackground">@color/little_check_launch_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/little_check_startup_animation</item>
+        <item name="android:windowSplashScreenAnimationDuration">720</item>
+    </style>
+</resources>

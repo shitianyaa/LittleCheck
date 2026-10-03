@@ -1,0 +1,29 @@
+{
+  "schema_version": 2,
+  "title": "我的科技订阅",
+  "description": "开源项目与科技动态",
+  "generated_at": "2026-10-03T08:00:00+08:00",
+  "items": [
+    {
+      "id": "github:example/demo",
+      "title": "示例开源项目",
+      "summary": "用一句话描述项目用途。",
+      "content": "## 项目介绍\n\n正文支持 Markdown。\n\n![预览](https://example.com/media/demo.webp)",
+      "platform": "GitHub",
+      "source": "GitHub Trending",
+      "url": "https://github.com/example/demo",
+      "published_at": "2026-10-03T07:30:00+08:00",
+      "tags": ["开源", "工具"]
+    },
+    {
+      "id": "article:20261003-001",
+      "title": "没有标注平台的文章",
+      "summary": "这条会归到其他。",
+      "content": "文章正文。",
+      "source": "个人博客",
+      "url": "https://example.com/articles/001",
+      "published_at": "2026-10-03T07:00:00+08:00",
+      "tags": []
+    }
+  ]
+}

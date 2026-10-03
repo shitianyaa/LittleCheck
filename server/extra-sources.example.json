@@ -1,0 +1,7 @@
+{
+  "extra_sources": [
+    {"id": "sspai", "name": "少数派", "url": "https://sspai.com/feed", "max_items": 5, "enabled": true},
+    {"id": "v2ex", "name": "V2EX", "url": "https://www.v2ex.com/index.xml", "max_items": 5, "enabled": true},
+    {"id": "hackernews", "name": "Hacker News", "url": "https://hnrss.org/frontpage", "max_items": 5, "enabled": true}
+  ]
+}
