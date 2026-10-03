@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144" viewBox="0 0 48 48" role="img" aria-labelledby="title">
+  <title id="title">Little Check</title>
+  <path fill="#4F7693" d="M12 0H36Q48 0 48 12V36Q48 48 36 48H12Q0 48 0 36V12Q0 0 12 0Z"/>
+  <path fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" d="M32 16A11 11 0 1 0 35 25"/>
+  <path fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" d="M18 24L22 28L31 19"/>
+</svg>

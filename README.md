@@ -1,74 +1,107 @@
-# Little Check
+<p align="center">
+  <img src="docs/assets/little-check.svg" width="112" height="112" alt="Little Check 应用图标" />
+</p>
 
-Android 信息流与本地 Markdown 笔记，待办保存在 Markdown 的任务清单中。
+<h1 align="center">Little Check</h1>
+
+<p align="center">信息流 · Markdown 笔记 · 待办 · AI 翻译与总结</p>
+<p align="center">把关注的内容汇成信息流，把值得留下的内容写进笔记。</p>
+
+<p align="center">
+  <a href="https://github.com/shitianyaa/LittleCheck/releases/latest"><img src="https://img.shields.io/github/v/release/shitianyaa/LittleCheck?style=flat-square&amp;color=4F7693" alt="最新版本" /></a>
+  <a href="https://github.com/shitianyaa/LittleCheck/releases"><img src="https://img.shields.io/github/downloads/shitianyaa/LittleCheck/total?style=flat-square&amp;color=4F7693" alt="Release 下载次数" /></a>
+  <a href="https://flutter.dev"><img src="https://img.shields.io/badge/Flutter-3.47.6-4F7693?style=flat-square&amp;logo=flutter&amp;logoColor=white" alt="Flutter 3.47.6" /></a>
+  <img src="https://img.shields.io/badge/平台-Android%20%7C%20Windows-4F7693?style=flat-square" alt="Android 与 Windows" />
+</p>
+
+<p align="center">
+  <a href="https://github.com/shitianyaa/LittleCheck/releases/latest"><b>下载应用</b></a> ·
+  <a href="docs/feed-format.md">制作订阅</a> ·
+  <a href="docs/ai-and-notes.md">使用说明</a> ·
+  <a href="https://github.com/shitianyaa/LittleCheck/issues">反馈问题</a>
+</p>
 
 ## 下载
 
-[GitHub Releases](https://github.com/shitianyaa/LittleCheck/releases/latest)：Android 多数手机下载 ARM64（arm64-v8a），旧款 32 位 ARM 手机下载 ARM32（armeabi-v7a）；不确定架构或使用 x86_64 设备时下载通用 APK，Windows x64 下载免安装 ZIP，解压到自选目录后运行 `little_check.exe`，保留同目录 DLL 与 data。Windows 的笔记和设置仍保存在系统应用数据目录。
+在 [GitHub Releases](https://github.com/shitianyaa/LittleCheck/releases/latest) 选择对应文件：
 
-公开 APK 使用固定正式签名；之前本机测试签名版本无法直接覆盖，请先导出笔记再换装。后续正式版本保持同一签名。各下载文件的 SHA-256 位于 Release 的 `SHA256SUMS.txt`。
+| 版本 | 文件后缀 | 适合设备 |
+| --- | --- | --- |
+| Android ARM64 | `android-arm64-v8a.apk` | 多数现代 Android 手机，优先选择 |
+| Android ARM32 | `android-armeabi-v7a.apk` | 旧款 32 位 ARM 手机 |
+| Android 通用 | `android-universal.apk` | 不确定架构，或使用 x86_64 设备；体积较大 |
+| Windows x64 | `windows-x64.zip` | 解压到自选目录，运行 `little_check.exe` |
 
-## 使用
+Windows 为免安装目录包，保留 EXE 同目录的 DLL 和 `data` 文件夹。笔记与设置仍存放在系统应用数据目录，移动程序目录不会迁移数据。
 
-AI 结果按帖子持久关联。原帖标题/正文或模型配置变化时，重新进入仍显示上次结果并提示变化；手动重新生成成功后才更新结果。处理时支持暂停并显示用时，暂停会关闭当前请求，重新开始需再次调用模型，已有结果保留。成功调用的总用时随结果保存。
+三份 Android APK 使用相同的应用 ID、版本号和固定正式签名。此前本机测试签名版本无法直接覆盖，请先导出需要保留的笔记，再换装正式版本。下载文件的 SHA-256 可在 Release 的 `SHA256SUMS.txt` 中核对。
 
-历史合并优先使用原帖 URL；不同 URL 即使复用同一个 ID 也分别保留，同一 URL 更新一条。七天保留的是已接收到的帖子，无法恢复旧版本已经覆盖或从未接收的条目。
+## 能做什么
 
-客户端支持多个 JSON 订阅源，分别刷新与缓存，合并后按原帖 URL 去重。平台标签自动读取条目 platform 字段，缺失归到其他；支持订阅来源与平台组合筛选、左右滑动、保留滚动位置、返回顶部。刷新完成后短暂显示生成时间，单个订阅失败保留原缓存。
+| 功能 | 使用方式 |
+| --- | --- |
+| 📰 信息流阅读 | 添加多个 JSON 订阅，按来源、平台筛选，搜索、阅读与保存内容 |
+| 📝 Markdown 笔记 | 文件夹、任务清单、回收站、导入导出，支持 16 项快捷格式 |
+| ✨ 帖内 AI | 翻译与总结，可复制、重试，或保存到预制笔记文件夹 |
+| 🎨 外观设置 | 五种配色、亮暗主题、系统字体与 TTF/OTF 字体导入 |
 
-信息流仅在进入应用、手动下拉/点击刷新、切换订阅来源时请求更新；平台切换、搜索、返回设置不刷新。带图帖子显示图片标记。选择框统一使用外置标签和底部选择列表。
+**信息流**：各订阅独立刷新、缓存，失败保留上次内容。按原帖 URL 合并去重，默认保留已接收的近七天，可调整为 14 / 30 / 90 天。仅在进入或恢复应用、手动刷新、切换订阅来源时联网，搜索与平台筛选不触发刷新。
 
-信息流按订阅分别合并历史，默认保留最近七天，设置可改为 14 / 30 / 90 天。同 ID 或同 URL 更新原条目；刷新失败保留缓存，未访问期间的帖子需要订阅服务端自行保留，客户端无法补回从未收到的条目。
+**笔记与待办**：笔记保存在本地 Markdown 文件，待办写在任务清单中。Android 可从文件管理器打开 Markdown，先预览再导入副本；导出文件使用笔记标题命名。卸载应用前请导出需要保留的文件。
 
-AI 只提供翻译与总结：标题下点击翻译，右下角点击总结，结果显示在帖子底部，可复制、重试或存入「AI 翻译 / AI 总结」文件夹。GitHub 仓库可拉取并缓存 README，AI 调用时自动补充。设置集中管理独立提示词、主模型、可选翻译/识图模型及默认思考参数。支持 Chat Completions、Responses、Messages，HTTP/HTTPS、多供应商、多 Key、多模型、拉取列表、手填 ID 与别名。模型预设来自 ai-toolbox，应用预设保留请求 ID；密钥存入系统安全存储。旧聊天文件保留，阅读页不再提供聊天或联网查询入口。
+**AI 翻译与总结**：自行配置供应商、Key 和模型，支持 Chat Completions、Responses、Messages 三种协议。主模型之外可单独指定翻译、识图模型，未配置时沿用主模型。Key 存入系统安全存储。结果与帖子持久关联，内容或配置变化时保留上次结果并提示；暂停中止请求，重新开始会再次调用模型。
 
-笔记支持单层文件夹和回收站，分享/导出以笔记标题命名。Android 支持从文件管理器选择应用打开 Markdown，先预览再导入副本。信息流与笔记图片共用磁盘缓存。详细约定见 [docs/ai-and-notes.md](docs/ai-and-notes.md)，通用订阅格式与模板见 [docs/feed-format.md](docs/feed-format.md)。
+**外观与编辑**：雾蓝、松绿、暖橙、鸢紫、石墨五种配色。默认系统字体，支持导入 TTF/OTF（单文件最多 64 MiB）。环线对号用于应用图标与启动动效，支持系统减弱动效设置。
 
-无锁屏推送、后台轮询、账号或笔记云同步。笔记存在应用私有目录，卸载前通过导出保留文件。VPS 使用现有静态网站，Hermes 每小时生成 JSON，发布器校验成功后替换文件，失败保留旧内容；成功后主动触发 GitHub Pages 镜像更新，GitHub 原定时任务保留兜底。服务器生成与发布接入见 [server/README.md](server/README.md)。
+当前没有账号系统、笔记云同步、后台轮询或锁屏推送。协议、保存与数据行为详见 [使用说明](docs/ai-and-notes.md)。
 
-## 制作自己的订阅
+## 三步开始
 
-下载 [v2 示例](server/feed-v2.example.json)、[JSON Schema](server/feed-v2.schema.json) 和[使用说明](docs/feed-format.md)，发给 AI Agent，并使用说明里的「一句话提示词」生成自己的 `feed.json`。将文件托管到手机可访问的 HTTP(S) 地址，在「设置 → 订阅源 → 添加订阅源」填写名称和 JSON 地址即可。持续更新需要托管端定期生成文件；字段含义、校验与图片约定均见使用说明。
+1. 下载并安装对应版本，Windows 解压后运行。
+2. 在「设置 → 订阅源 → 添加订阅源」填写名称与可访问的 JSON 地址，进入信息流刷新。
+3. 如需翻译和总结，在设置中配置自己的 AI 供应商与模型；笔记和待办可直接使用。
 
-## 外观与编辑
+## 用 AI 制作自己的订阅
 
-设置支持雾蓝、松绿、暖橙、鸢紫、石墨五种配色，并分别适配亮暗模式。默认使用系统字体，APK 不内置中文字体。在「设置 → 配色与字体 → 导入字体」选择 TTF / OTF 文件（单个最多 64 MiB），预览后点击保存应用；文件复制到应用私有目录，重启后继续加载，也可切回系统字体。重新导入可替换当前自定义字体。旧版文楷/黑体选择按系统字体处理；自定义文件丢失或损坏时明确提示，临时回退系统字体，原配置保留以便重新导入。暂不支持 TTC 字体合集。
+把 [v2 示例](server/feed-v2.example.json)、[JSON Schema](server/feed-v2.schema.json) 和[使用说明](docs/feed-format.md) 发给 AI Agent，复制这句话，并替换其中的内容来源：
 
-笔记底部保留常用工具，点击「更多格式」打开 16 项格式面板：三级标题、粗体、斜体、删除线、无序/有序列表、待办、引用、链接、图片、行内代码、代码块、分隔线、表格。空光标时插入并选中占位文字，直接输入即可替换；选中文字时保留原内容，块格式与前后段落分隔。
+> 请按我发给你的 Little Check 模板 `feed-v2.example.json`、格式规范 `feed-v2.schema.json` 和使用说明 `feed-format.md`，把【来源链接或我提供的内容】整理成可订阅的 UTF-8 `feed.json`，保持条目 ID 稳定，保留真实原帖链接和发布时间，完成格式校验，并告诉我如何托管文件及在 App 中添加订阅；缺失的必要信息请列出来让我补充。
 
-环线对号标识用于桌面图标、Android 12+ 原生启动动画和顶部一次性动画，不人为增加启动等待。正常保留精致、流畅的短时动效，系统减少动态效果仅作无障碍适配；系统启动动画由 Android 控制。Android 7–11 使用静态原生启动页。
+将生成的文件托管到手机可访问的 HTTP(S) 地址，再添加为订阅。持续更新需要托管端定期生成文件；模板本身不会自动抓取内容。App 当前不直接订阅 RSS/Atom，需先转换成 JSON。
 
-## 开发环境
+| 文档 | 内容 |
+| --- | --- |
+| [订阅模板与字段](docs/feed-format.md) | 5 个顶层字段、9 个帖子字段，校验与接入步骤 |
+| [服务器生成与发布](server/README.md) | JSON 校验、原子发布、生成器与 RSS 来源 |
+| [GitHub Pages 镜像](docs/github-feed-publishing.md) | 通用部署教程与可选工作流触发 |
+| [构建与发布](docs/releasing.md) | 正式签名、GitHub 自动构建与版本发布 |
 
-Flutter 3.47.6 / Dart 3.13.5，依赖版本锁定于 pubspec.lock。
+## 开发
+
+Flutter **3.47.6** / Dart **3.13.5**，依赖锁定于 `pubspec.lock`。Windows 构建需安装 Visual Studio 的 C++ 桌面开发工具链。
 
 ```sh
 flutter pub get
 flutter test
 flutter analyze
 flutter build apk --release --target-platform android-arm64
-python3 -m unittest discover -s server -v
 ```
 
-当前 Windows 开发机 SDK 位于 .tools/flutter。Flutter 原生构建工具对含空格的 SDK 路径处理异常，建立了 D:\Project\LittleCheckSDK 目录联接，使用其 bin/flutter.bat。Pub 缓存设置为项目内 .tools/pub-cache，避免 Kotlin 增量编译跨 C/D 盘路径失败，Gradle 缓存为 .tools/gradle。工具和缓存不属于源码。
+服务端检查需先安装 [server/requirements.txt](server/requirements.txt) 中的依赖：
 
-```powershell
-$env:PUB_CACHE = 'D:\Project\Little Check\.tools\pub-cache'
-& 'D:\Project\LittleCheckSDK\bin\flutter.bat' test --no-pub
-& 'D:\Project\LittleCheckSDK\bin\flutter.bat' analyze --no-pub
+```sh
+python3 -m pip install -r server/requirements.txt
+python3 -B -m unittest discover -s server -v
 ```
 
-Windows x64 已在本机构建成功。GitHub 工作流使用 Flutter 3.47.6 检查代码，并在版本标签推送后构建 Android ARM64 / ARM32 / 通用三份 APK、完整 Windows x64 ZIP 与 SHA-256 文件，再创建 Release；签名配置和发布步骤见 [docs/releasing.md](docs/releasing.md)。未配置签名的本地测试构建仍使用测试签名，CI 发布必须使用固定正式签名。真机导入、分享、帧率及干净 Windows 机器上的完整使用仍待验证。
+推送版本标签时，GitHub 在同一工作流内完成检查、Android 三份 APK 与 Windows ZIP 构建，再发布 Release 和校验文件。普通 main 推送不重复触发；PR 与手动检查保留。签名配置见 [发布说明](docs/releasing.md)。未配置正式签名的本机测试构建使用测试签名。
 
-## 复用组件
+## 组件与来源
 
-- [flutter_markdown_plus](https://github.com/flutter-markdown-plus/flutter-markdown-plus) 与 [markdown](https://github.com/dart-lang/markdown)：GFM 渲染和解析，按源位置修改任务。
+- [flutter_markdown_plus](https://github.com/flutter-markdown-plus/flutter-markdown-plus) / [markdown](https://github.com/dart-lang/markdown)：GFM 渲染、解析与任务定位。
 - [Flutter packages](https://github.com/flutter/packages)：path_provider、file_selector、url_launcher，负责数据目录、文件选择和来源链接。
-- [share_plus](https://github.com/fluttercommunity/plus_plugins)：Android 导出到系统分享。
-- Dart HttpClient、Python 标准库：网络与原子发布；crypto 用于按 URL 隔离缓存。
-- Flutter FontLoader 与现有 file_selector：动态加载用户选择的字体，不新增依赖。assets/fonts 的旧字体及授权文件保留为测试资源，不再打包进 APK。
-- [ai-toolbox](https://github.com/coulsontl/ai-toolbox)：内置 102 条模型预设数据，原始数据及 AGPL-3.0 许可位于 assets/ai，来源与版本见 NOTICE.txt；配置适配代码独立实现。第三方预设属于参考配置，不保证兼容每个供应商。
+- [share_plus](https://github.com/fluttercommunity/plus_plugins)：Android 系统分享与导出。
+- Dart HttpClient、Python 标准库与 crypto：网络、原子发布与缓存隔离；Flutter FontLoader 加载自定义字体。
+- [ai-toolbox](https://github.com/coulsontl/ai-toolbox)：102 条模型预设数据，来源与 AGPL-3.0 许可见 [assets/ai/NOTICE.txt](assets/ai/NOTICE.txt)。预设仅供参考，不保证兼容所有供应商。
 
-未引入额外状态管理、数据库或动画框架。亮暗主题使用中性色、低饱和蓝和短标签过渡。
-
-关键代码：lib/feed.dart、lib/storage.dart、lib/tasks.dart、lib/markdown_view.dart；界面位于 lib/app.dart、lib/feed_view.dart、lib/note_view.dart。发布器为 server/publish_feed.py。
+旧字体及授权文件保留在 `assets/fonts` 作为测试资源，不再打包进 APK。
