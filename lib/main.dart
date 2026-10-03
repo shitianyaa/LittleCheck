@@ -13,6 +13,11 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   LicenseRegistry.addLicense(() async* {
     yield LicenseEntryWithLineBreaks(
+      ['Little Check'],
+      'Copyright (C) 2026 shitianyaa\n\n'
+      '${await rootBundle.loadString('assets/ai/AGPL-3.0.txt')}',
+    );
+    yield LicenseEntryWithLineBreaks(
       ['ai-toolbox model preset data'],
       '${await rootBundle.loadString('assets/ai/NOTICE.txt')}\n\n'
       '${await rootBundle.loadString('assets/ai/AGPL-3.0.txt')}',

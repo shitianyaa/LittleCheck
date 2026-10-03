@@ -12,6 +12,7 @@
   <a href="https://github.com/shitianyaa/LittleCheck/releases"><img src="https://img.shields.io/github/downloads/shitianyaa/LittleCheck/total?style=flat-square&amp;color=4F7693" alt="Release 下载次数" /></a>
   <a href="https://flutter.dev"><img src="https://img.shields.io/badge/Flutter-3.47.6-4F7693?style=flat-square&amp;logo=flutter&amp;logoColor=white" alt="Flutter 3.47.6" /></a>
   <img src="https://img.shields.io/badge/平台-Android%20%7C%20Windows-4F7693?style=flat-square" alt="Android 与 Windows" />
+  <a href="LICENSE"><img src="https://img.shields.io/badge/开源协议-AGPL--3.0-4F7693?style=flat-square" alt="AGPL-3.0 协议" /></a>
 </p>
 
 <p align="center">
@@ -105,3 +106,12 @@ python3 -B -m unittest discover -s server -v
 - [ai-toolbox](https://github.com/coulsontl/ai-toolbox)：102 条模型预设数据，来源与 AGPL-3.0 许可见 [assets/ai/NOTICE.txt](assets/ai/NOTICE.txt)。预设仅供参考，不保证兼容所有供应商。
 
 旧字体及授权文件保留在 `assets/fonts` 作为测试资源，不再打包进 APK。
+
+## 开源协议
+
+本项目基于 [GNU Affero General Public License v3.0 (AGPL-3.0)](LICENSE) 开源。
+
+Copyright (C) 2026 shitianyaa
+
+- 任何基于本项目修改、衍生或分发的版本（包括通过网络提供服务），均必须以 AGPL-3.0 协议完全开源所有源代码。
+- 必须完整保留原作者署名及版权声明。
