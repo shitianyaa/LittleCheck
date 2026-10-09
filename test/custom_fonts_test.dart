@@ -102,7 +102,11 @@ void main() {
       );
       await tester.tap(find.byTooltip('设置'));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('配色与字体'));
+      await tester.scrollUntilVisible(
+        find.text('配色与字体'),
+        180,
+        scrollable: find.byType(Scrollable).last,
+      );
       await tester.tap(find.text('配色与字体'));
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.byKey(const ValueKey('font:system')));

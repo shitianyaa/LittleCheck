@@ -1,7 +1,12 @@
+import 'dart:io';
+
+import 'package:file_selector/file_selector.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'ai.dart';
 import 'app.dart';
+import 'data_directory.dart';
 import 'feed.dart';
 import 'image_cache.dart';
 import 'settings_dialog.dart';
@@ -10,6 +15,7 @@ import 'selection_field.dart';
 import 'provider_page.dart';
 import 'action_settings_page.dart';
 import 'ai_keys.dart';
+import 'sync_page.dart';
 
 Future<Map<String, String>?> editFields(
   BuildContext context,
@@ -226,6 +232,88 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
       ),
     );
+  }
+
+  String _dataSize(int bytes) {
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) {
+      return '${(bytes / 1024).toStringAsFixed(1)} KiB';
+    }
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MiB';
+  }
+
+  Future<void> _openDataDirectory() async {
+    if (!Platform.isWindows) return;
+    await _run(() async {
+      await Process.start('explorer.exe', [
+        store.directory.path,
+      ], mode: ProcessStartMode.detached);
+    });
+  }
+
+  Future<void> _migrateDataDirectory() async {
+    if (!Platform.isWindows) return;
+    final selected = await getDirectoryPath(
+      initialDirectory: store.directory.parent.path,
+      confirmButtonText: '选择此文件夹',
+      canCreateDirectories: true,
+    );
+    if (selected == null || !mounted) return;
+    final target = Directory(selected).absolute;
+    final confirmed =
+        await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: const Text('迁移数据目录？'),
+            content: SingleChildScrollView(
+              child: Text(
+                '当前目录：\n${store.directory.path}\n\n'
+                '目标目录：\n${target.path}\n\n'
+                '请选择空文件夹。Little Check 会先复制并校验全部本地数据，校验成功后才切换启动位置；旧目录会保留为备份。\n\n'
+                'AI Key、设备身份与配对密钥仍由 Windows 安全存储管理，不会复制到这个文件夹。云盘目录可用于备份，但不要让多台设备同时运行同一数据目录。\n\n'
+                '迁移成功后应用会关闭，请重新打开。',
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('取消'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: const Text('迁移'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+    if (!confirmed || !mounted) return;
+    await _run(() async {
+      final manager = await DataDirectoryManager.system();
+      final result = await manager.migrate(store, target);
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => PopScope(
+          canPop: false,
+          child: AlertDialog(
+            title: const Text('迁移完成'),
+            content: Text(
+              '已校验 ${result.files} 个文件，共 ${_dataSize(result.bytes)}。\n\n'
+              '新目录：\n${result.target.path}\n\n'
+              '当前旧目录仍保留为备份。Little Check 现在需要关闭，重新打开后会从新目录加载数据。',
+            ),
+            actions: [
+              FilledButton(
+                onPressed: () => exit(0),
+                child: const Text('关闭 Little Check'),
+              ),
+            ],
+          ),
+        ),
+      );
+    });
   }
 
   Future<Map<String, dynamic>?> _pickModel(
@@ -450,6 +538,19 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 _section('外观与存储'),
                 ListTile(
+                  leading: const Icon(Icons.devices_rounded),
+                  title: const Text('设备同步'),
+                  subtitle: const Text('Android 与 Windows · 局域网手动同步'),
+                  onTap: _busy
+                      ? null
+                      : () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => SyncPage(store: store),
+                          ),
+                        ),
+                ),
+                ListTile(
                   leading: const Icon(Icons.palette_outlined),
                   title: const Text('配色与字体'),
                   onTap: _busy
@@ -467,6 +568,24 @@ class _SettingsPageState extends State<SettingsPage> {
                           }
                         },
                 ),
+                if (defaultTargetPlatform == TargetPlatform.windows) ...[
+                  ListTile(
+                    leading: const Icon(Icons.folder_open_outlined),
+                    title: const Text('数据存储位置'),
+                    subtitle: Text(
+                      store.directory.path,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    onTap: _busy ? null : _openDataDirectory,
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.drive_file_move_outline),
+                    title: const Text('迁移数据目录'),
+                    subtitle: const Text('选择空文件夹 · 复制校验后重启生效'),
+                    onTap: _busy ? null : _migrateDataDirectory,
+                  ),
+                ],
                 ListTile(
                   leading: const Icon(Icons.cleaning_services_outlined),
                   title: const Text('清理图片缓存'),
@@ -486,7 +605,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 const ListTile(
                   title: Text('Little Check'),
                   subtitle: Text(
-                    '信息流与本地 Markdown 笔记\n笔记和 AI 密钥只保存在本机。卸载前请导出笔记。',
+                    '信息流与本地 Markdown 笔记\n笔记可与配对设备同步，AI 密钥各端保存。卸载前请导出笔记。',
                   ),
                 ),
                 ListTile(

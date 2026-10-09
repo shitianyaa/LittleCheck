@@ -661,6 +661,7 @@ class _NotePageState extends State<NotePage> {
   void initState() {
     super.initState();
     _id = widget.note?.id ?? widget.store.newNoteId();
+    widget.store.beginEditing(_id);
     _saved = widget.note?.content ?? '';
     _editor = TextEditingController(text: _saved)..addListener(_changed);
     _editing = widget.note == null;
@@ -672,6 +673,7 @@ class _NotePageState extends State<NotePage> {
 
   @override
   void dispose() {
+    widget.store.endEditing(_id);
     _editor.removeListener(_changed);
     _editor.dispose();
     _focus.dispose();

@@ -194,6 +194,7 @@ class _LittleCheckAppState extends State<LittleCheckApp> {
     );
     if (mounted) {
       setState(() {});
+      await _notesKey.currentState?.reload();
       if (sources != widget.store.subscriptions.toString()) {
         await _feedKey.currentState?.reloadEndpoint(fetch: false);
       } else if (days != widget.store.feedRetentionDays) {

@@ -20,18 +20,37 @@ Future<void> finishIO(
   WidgetTester tester, [
   Future<void> Function()? action,
 ]) async {
+  var done = action == null;
+  Object? failure;
+  StackTrace? failureStack;
   await tester.runAsync(() async {
-    if (action != null) await action();
+    if (action != null) {
+      // Do not await here: a queued store operation may depend on a callback
+      // registered in the widget's fake clock, which needs tester.pump below.
+      action().then(
+        (_) => done = true,
+        onError: (Object error, StackTrace stack) {
+          failure = error;
+          failureStack = stack;
+          done = true;
+        },
+      );
+    }
     await Future<void>.delayed(const Duration(milliseconds: 120));
   });
-  // Route completion can start a write with several real IO awaits. Advance
-  // frames between IO turns before settling indefinite loading indicators.
-  for (var turn = 0; turn < 5; turn++) {
+  for (var turn = 0; turn < 150; turn++) {
     await tester.pump(const Duration(milliseconds: 100));
     await tester.runAsync(
-      () => Future<void>.delayed(const Duration(milliseconds: 120)),
+      () => Future<void>.delayed(const Duration(milliseconds: 40)),
     );
+    if (turn >= 5 && done && !tester.binding.hasScheduledFrame) break;
   }
+  if (failure != null) Error.throwWithStackTrace(failure!, failureStack!);
+  expect(
+    done,
+    isTrue,
+    reason: 'Real IO operation did not finish within the bounded wait',
+  );
   await tester.pumpAndSettle();
 }
 
@@ -447,7 +466,11 @@ void main() {
     );
     await tester.tap(find.byTooltip('设置'));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('配色与字体'));
+    await tester.scrollUntilVisible(
+      find.text('配色与字体'),
+      180,
+      scrollable: find.byType(Scrollable).last,
+    );
     await tester.tap(find.text('配色与字体'));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.byKey(const ValueKey('palette:green')));

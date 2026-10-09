@@ -19,6 +19,9 @@ dependencies:
   cached_network_image: ^4.0.4
   flutter_cache_manager: ^3.4.5
   flutter_secure_storage: ^11.2.0
+  basic_utils: ^5.8.2
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^7.4.2
 dev_dependencies:
   flutter_test:
     sdk: flutter
