@@ -8,19 +8,28 @@ import 'package:little_check/feed.dart';
 import 'package:little_check/note_filename.dart';
 import 'package:little_check/storage.dart';
 
+/// 测试数据的发布时间基于当前时刻生成，避免写死日期随日历推进过期后被
+/// 「保留最近 N 天」过滤掉（见 lib/feed.dart 的 retainHistory）。
+/// widget 测试无法给 FeedView 注入时钟，只能用真实当前时间。
+///
+/// 全部条目共用一个冻结时间戳：若每次调用取 `DateTime.now()`，条目间会产生
+/// 微秒差，merge 按发布时间排序后顺序随机，条目可能落到视口外而使
+/// `find.text` 找不到。冻结时间保证顺序确定，与原先写死同一日期的行为一致。
+final _frozenIso = DateTime.now().toUtc().toIso8601String();
+
 Map<String, dynamic> item(String id, {String? platform, String? url}) => {
   'id': id,
   'title': '标题 $id',
   'summary': '',
   'content': '正文',
   'source': '账号',
-  'published_at': '2026-10-03T08:00:00+08:00',
+  'published_at': _frozenIso,
   'platform': ?platform,
   'url': ?url,
 };
 Map<String, dynamic> feed(List<Map<String, dynamic>> items) => {
   'schema_version': 2,
-  'generated_at': '2026-10-03T08:00:00+08:00',
+  'generated_at': _frozenIso,
   'items': items,
 };
 

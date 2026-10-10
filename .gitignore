@@ -14,8 +14,13 @@ android/.kotlin/
 LittleCheck-Feed/
 
 # Local collaboration records and historical plans
+CLAUDE.md
 AGENTS.md
 AGENTS.local.md
 lesson/
 docs/plans/
 docs/private/
+
+# 本地 Agent CLI 工具链（暂不入库）
+bin/
+skills/

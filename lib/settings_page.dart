@@ -16,6 +16,8 @@ import 'provider_page.dart';
 import 'action_settings_page.dart';
 import 'ai_keys.dart';
 import 'sync_page.dart';
+import 'daily_tracker.dart';
+import 'wallpaper_sources_page.dart';
 
 Future<Map<String, String>?> editFields(
   BuildContext context,
@@ -316,6 +318,27 @@ class _SettingsPageState extends State<SettingsPage> {
     });
   }
 
+  Future<void> _configureWallpaperSource() async {
+    await Navigator.push<void>(
+      context,
+      MaterialPageRoute(builder: (_) => const WallpaperSourcesPage()),
+    );
+    if (mounted) setState(() {});
+  }
+
+  String _wallpaperSubtitle(BuildContext context) {
+    final tracker = DailyTrackerScope.of(context);
+    if (tracker == null) return '必应每日风景 · 磁盘缓存';
+    if (tracker.wallpaperMode == WallpaperMode.rotate) {
+      final count = tracker.customWallpaperSources.length;
+      return count == 0 ? '随机轮换 · 暂无自定义源' : '随机轮换 · $count 个自定义源';
+    }
+    final active = tracker.wallpaperSources
+        .where((s) => s.id == tracker.activeWallpaperSourceId)
+        .firstOrNull;
+    return '${active?.name ?? '必应每日风景'} · 磁盘缓存';
+  }
+
   Future<Map<String, dynamic>?> _pickModel(
     Map<String, dynamic> provider,
   ) async {
@@ -586,6 +609,12 @@ class _SettingsPageState extends State<SettingsPage> {
                     onTap: _busy ? null : _migrateDataDirectory,
                   ),
                 ],
+                ListTile(
+                  leading: const Icon(Icons.wallpaper_outlined),
+                  title: const Text('每日手帐壁纸源'),
+                  subtitle: Text(_wallpaperSubtitle(context)),
+                  onTap: _busy ? null : _configureWallpaperSource,
+                ),
                 ListTile(
                   leading: const Icon(Icons.cleaning_services_outlined),
                   title: const Text('清理图片缓存'),

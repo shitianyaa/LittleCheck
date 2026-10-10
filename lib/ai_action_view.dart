@@ -211,8 +211,8 @@ class AiActionResultState extends State<AiActionResult> {
     super.dispose();
   }
 
-  Future<void> run({bool force = false}) async {
-    if (_busy) return;
+  Future<bool> run({bool force = false}) async {
+    if (_busy) return false;
     final generation = ++_generation;
     final service = AiActionService(widget.store);
     _service = service;
@@ -228,6 +228,7 @@ class AiActionResultState extends State<AiActionResult> {
       _paused = false;
       _error = null;
     });
+    var succeeded = false;
     try {
       final next = await service.run(
         widget.item,
@@ -235,12 +236,13 @@ class AiActionResultState extends State<AiActionResult> {
         images: _images,
         force: force,
       );
-      if (!mounted || generation != _generation) return;
+      if (!mounted || generation != _generation) return false;
       setState(() {
         result = next;
         _savedId = null;
       });
       widget.onChanged?.call(next);
+      succeeded = true;
     } catch (e) {
       if (mounted && generation == _generation) {
         setState(() => _error = aiFailureMessage(e));
@@ -254,6 +256,7 @@ class AiActionResultState extends State<AiActionResult> {
         setState(() => _busy = false);
       }
     }
+    return succeeded;
   }
 
   Future<void> _saveNote() async {

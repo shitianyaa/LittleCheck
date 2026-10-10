@@ -1203,6 +1203,22 @@ class LocalStore {
   Future<List<Note>> loadNotes({bool trash = false}) =>
       _enqueue(() => _loadNotes(trash: trash));
 
+  /// 从磁盘重读 notebook.json 与 sync-state.json，同步外部（如 lck 命令行）
+  /// 对文件夹结构、笔记归属与删除标记的改动。走 _enqueue 串行化，与写操作
+  /// 共用队列避免竞态。
+  Future<void> reloadNotebook() => _enqueue(() async {
+    final file = File('${directory.path}/notebook.json');
+    if (await file.exists()) {
+      final data = jsonDecode(await file.readAsString());
+      if (data is! Map<String, dynamic>) {
+        throw const FormatException('笔记目录损坏，原文件已保留');
+      }
+      _validateNotebook(data);
+      _notebook = data;
+    }
+    await _loadSyncState();
+  });
+
   Future<List<Note>> _loadNotes({bool trash = false}) async {
     final notes = <Note>[];
     await for (final entity in notesDirectory.list()) {

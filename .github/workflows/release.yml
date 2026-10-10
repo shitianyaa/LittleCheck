@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      build_only:
+        description: '仅构建产物（不上传 Release，产物在 Actions 页下载）'
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -16,6 +21,8 @@ concurrency:
 
 env:
   FLUTTER_VERSION: '3.47.6'
+  # 产物命名标签：tag 触发用 tag 名；手动触发用分支名（避免依赖 GITHUB_REF_NAME 歧义）。
+  LC_LABEL: ${{ github.ref_name }}
 
 jobs:
   verify:
@@ -47,7 +54,7 @@ jobs:
               raise SystemExit('Release tag must match pubspec.yaml version')
 
   android:
-    if: startsWith(github.ref, 'refs/tags/')
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     needs: verify
     runs-on: ubuntu-24.04
     timeout-minutes: 40
@@ -72,9 +79,14 @@ jobs:
         run: |
           import base64, os
           from pathlib import Path
-          for key in ('KEYSTORE_BASE64', 'ANDROID_STORE_PASSWORD', 'ANDROID_KEY_ALIAS', 'ANDROID_KEY_PASSWORD'):
-              if not os.environ.get(key):
-                  raise SystemExit('Required Android signing secret is missing: ' + key)
+          values = (os.environ.get('KEYSTORE_BASE64'), os.environ.get('ANDROID_STORE_PASSWORD'),
+                    os.environ.get('ANDROID_KEY_ALIAS'), os.environ.get('ANDROID_KEY_PASSWORD'))
+          if not any(values):
+              # 手动构建且未配置密钥：留空，构建脚本回退到 debug 签名。
+              print('No Android signing secrets; falling back to debug signing.')
+              raise SystemExit(0)
+          if not all(values):
+              raise SystemExit('Partial Android signing secrets configured; set all four or none.')
           path = Path(os.environ['RUNNER_TEMP']) / 'little-check-release.p12'
           path.write_bytes(base64.b64decode(os.environ['KEYSTORE_BASE64'], validate=True))
           path.chmod(0o600)
@@ -85,16 +97,17 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
+          if [ ! -f "$ANDROID_KEYSTORE_PATH" ]; then unset ANDROID_KEYSTORE_PATH; fi
           flutter build apk --release --target-platform android-arm,android-arm64,android-x64 --no-pub
           mkdir release
-          cp build/app/outputs/flutter-apk/app-release.apk "release/LittleCheck-${GITHUB_REF_NAME}-android-universal.apk"
+          cp build/app/outputs/flutter-apk/app-release.apk "release/LittleCheck-${LC_LABEL}-android-universal.apk"
           flutter build apk --release --split-per-abi --target-platform android-arm,android-arm64 --no-pub
       - name: Package and verify APK architectures
         shell: python
         run: |
           import os, re, shutil, subprocess, zipfile
           from pathlib import Path
-          prefix = 'LittleCheck-' + os.environ['GITHUB_REF_NAME'] + '-android-'
+          prefix = 'LittleCheck-' + os.environ['LC_LABEL'] + '-android-'
           version = re.search(r'^version:\s*(\S+)', Path('pubspec.yaml').read_text(), re.M).group(1)
           version_name, _, version_code = version.partition('+')
           expected_package = ('dev.littlecheck.little_check', version_code or '1', version_name)
@@ -125,7 +138,8 @@ jobs:
           name: android-release
           path: release/*.apk
           if-no-files-found: error
-          retention-days: 1
+          # 手动构建时保留更久便于下载；tag 发布由 publish 立即消费。
+          retention-days: ${{ github.event_name == 'workflow_dispatch' && 14 || 1 }}
       - name: Remove restored signing key
         if: always()
         shell: python
@@ -135,7 +149,7 @@ jobs:
           (Path(os.environ['RUNNER_TEMP']) / 'little-check-release.p12').unlink(missing_ok=True)
 
   windows:
-    if: startsWith(github.ref, 'refs/tags/')
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     needs: verify
     runs-on: windows-2025
     timeout-minutes: 40
@@ -165,13 +179,13 @@ jobs:
             Copy-Item -LiteralPath "$($crt.FullName)/$dll" -Destination $bundle
           }
           New-Item -ItemType Directory -Force release | Out-Null
-          Compress-Archive -Path "$bundle/*" -DestinationPath "release/LittleCheck-${env:GITHUB_REF_NAME}-windows-x64.zip"
+          Compress-Archive -Path "$bundle/*" -DestinationPath "release/LittleCheck-${env:LC_LABEL}-windows-x64.zip"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: windows-release
           path: release/*.zip
           if-no-files-found: error
-          retention-days: 1
+          retention-days: ${{ github.event_name == 'workflow_dispatch' && 14 || 1 }}
 
   publish:
     if: startsWith(github.ref, 'refs/tags/')

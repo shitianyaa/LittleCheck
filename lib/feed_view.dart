@@ -544,16 +544,19 @@ class FeedViewState extends State<FeedView>
                   ),
                 ),
               InkWell(
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute<void>(
-                    builder: (_) => _FeedDetail(
-                      item: item,
-                      store: widget.store,
-                      onNoteSaved: widget.onNoteSaved,
+                onTap: () {
+                  DailyTrackerScope.of(context)?.recordFeedRead(item.source);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute<void>(
+                      builder: (_) => _FeedDetail(
+                        item: item,
+                        store: widget.store,
+                        onNoteSaved: widget.onNoteSaved,
+                      ),
                     ),
-                  ),
-                ),
+                  );
+                },
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(20, 14, 20, 18),
                   child: Column(
@@ -742,7 +745,11 @@ class _FeedDetailState extends State<_FeedDetail> {
       );
     }
     if (!mounted) return;
-    await target.currentState?.run();
+    final ok = await target.currentState?.run() ?? false;
+    if (ok && mounted) {
+      DailyTrackerScope.of(context)
+          ?.recordAiAction(isSummary: action == AiAction.summary);
+    }
     await _restoreReadme();
   }
 

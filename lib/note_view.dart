@@ -49,6 +49,8 @@ class NotesViewState extends State<NotesView> {
   Future<void> reload() async {
     final version = ++_reloadVersion;
     try {
+      // 先同步磁盘上的文件夹结构与笔记归属（外部 lck 等改动），再读正文。
+      await widget.store.reloadNotebook();
       final notes = await widget.store.loadNotes(trash: _trash);
       if (mounted && version == _reloadVersion) {
         setState(() {
@@ -681,8 +683,9 @@ class _NotePageState extends State<NotePage> {
   }
 
   Future<bool> _save() async {
-    if (_saving) return false;
+    if (_saving || !mounted) return false;
     final content = _editor.text;
+    final previous = _saved;
     setState(() {
       _saving = true;
       _saveError = null;
@@ -691,6 +694,15 @@ class _NotePageState extends State<NotePage> {
       await widget.store.saveNote(_id, content);
       if (widget.note == null && widget.folderId != null) {
         await widget.store.moveNote(_id, widget.folderId);
+      }
+      // 字数统计在保存成功后再计入，避免失败时虚增。
+      if (mounted) {
+        final added = content.length - previous.length;
+        if (added > 0) {
+          DailyTrackerScope.of(context)?.recordNoteEdit(added: added);
+        } else if (added < 0) {
+          DailyTrackerScope.of(context)?.recordNoteEdit(deleted: -added);
+        }
       }
       if (mounted) setState(() => _saved = content);
       return true;
@@ -976,11 +988,18 @@ class _NotePageState extends State<NotePage> {
                                     ? null
                                     : (offset) async {
                                         try {
+                                          // toggle 前判断：由未勾选变为勾选才算完成一次。
+                                          final wasUnchecked =
+                                              _editor.text[offset] == ' ';
                                           _editor.text = MarkdownTasks.toggle(
                                             _editor.text,
                                             offset,
                                           );
                                           await _save();
+                                          if (wasUnchecked && context.mounted) {
+                                            DailyTrackerScope.of(context)
+                                                ?.recordNoteEdit(tasks: 1);
+                                          }
                                         } catch (e) {
                                           if (context.mounted) {
                                             showFailure(context, e);

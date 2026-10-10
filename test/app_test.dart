@@ -16,6 +16,10 @@ import 'package:little_check/feed_view.dart';
 
 class _LocalHttpOverrides extends HttpOverrides {}
 
+/// 测试 feed 的发布时间：基于当前时刻的冻结值，避免写死日期随日历推进
+/// 超过保留期后被 retainHistory 过滤；全部条目共用同一时间戳以保证排序确定。
+final _frozenFeedTime = DateTime.now().toUtc().toIso8601String();
+
 Future<void> finishIO(
   WidgetTester tester, [
   Future<void> Function()? action,
@@ -81,7 +85,7 @@ void main() {
       addTearDown(() => server.close(force: true));
       final feed = {
         'schema_version': 1,
-        'generated_at': '2026-10-02T08:00:00Z',
+        'generated_at': _frozenFeedTime,
         'items':
             List.generate(
               30,
@@ -92,7 +96,7 @@ void main() {
                 'content': '正文',
                 'source': '测试来源',
                 'platform': 'github',
-                'published_at': '2026-10-02T08:00:00Z',
+                'published_at': _frozenFeedTime,
                 'url': 'https://github.com/example/repo$index',
               },
             )..add({
@@ -102,7 +106,7 @@ void main() {
               'content': '正文',
               'source': '画师',
               'platform': 'pixiv',
-              'published_at': '2026-10-02T07:00:00Z',
+              'published_at': _frozenFeedTime,
             }),
       };
       await finishIO(tester, () async {
