@@ -1,7 +1,7 @@
 name: little_check
 description: A quiet feed reader and local Markdown notebook.
 publish_to: none
-version: 0.1.0+1
+version: 0.2.0+2
 environment:
   sdk: ^3.13.5
 dependencies:
@@ -19,6 +19,9 @@ dependencies:
   cached_network_image: ^4.0.4
   flutter_cache_manager: ^3.4.5
   flutter_secure_storage: ^11.2.0
+  basic_utils: ^5.8.2
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^7.4.2
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -14,14 +14,12 @@ android/.kotlin/
 LittleCheck-Feed/
 
 # Local collaboration records and historical plans
+CLAUDE.md
 AGENTS.md
 AGENTS.local.md
 lesson/
-docs/handoff.md
-docs/design.md
-docs/implementation-draft.md
-docs/model-and-sync-plan.md
-docs/plan-topbar-and-icon.md
-docs/translation-redesign-research.md
-docs/ui-ai-design.md
+docs/plans/
 docs/private/
+
+# lck 的构建产物（源码入库，二进制只随 Release 分发）
+skills/lck/bin/

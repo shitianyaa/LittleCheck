@@ -32,8 +32,9 @@
 | Android ARM32 | `android-armeabi-v7a.apk` | 旧款 32 位 ARM 手机 |
 | Android 通用 | `android-universal.apk` | 不确定架构，或使用 x86_64 设备；体积较大 |
 | Windows x64 | `windows-x64.zip` | 解压到自选目录，运行 `little_check.exe` |
+| 命令行工具 lck | `lck-windows-x64.zip` | Windows x64；解压后是一个完整的 Agent skill 目录，见下文 |
 
-Windows 为免安装目录包，保留 EXE 同目录的 DLL 和 `data` 文件夹。笔记与设置仍存放在系统应用数据目录，移动程序目录不会迁移数据。
+Windows 为免安装目录包，解压后需保留 EXE 同目录的 DLL 和 Flutter `data` 运行资源文件夹。用户笔记与设置默认存放在系统应用数据目录，因此移动或重新解压程序目录不会丢失数据。Windows 可在「设置 → 外观与存储 → 迁移数据目录」选择一个空文件夹作为新的用户数据目录；应用会先复制并校验，成功后重启生效，旧目录保留为备份。AI Key、设备身份与配对密钥仍保存在系统安全存储，不随自定义目录复制。
 
 三份 Android APK 使用相同的应用 ID、版本号和固定正式签名。此前本机测试签名版本无法直接覆盖，请先导出需要保留的笔记，再换装正式版本。下载文件的 SHA-256 可在 Release 的 `SHA256SUMS.txt` 中核对。
 
@@ -43,8 +44,10 @@ Windows 为免安装目录包，保留 EXE 同目录的 DLL 和 `data` 文件夹
 | --- | --- |
 | 📰 信息流阅读 | 添加多个 JSON 订阅，按来源、平台筛选，搜索、阅读与保存内容 |
 | 📝 Markdown 笔记 | 文件夹、任务清单、回收站、导入导出，支持 16 项快捷格式 |
+| 🔗 设备同步 | Windows 开启同步页面，Android 扫码配对，局域网手动双向同步笔记与待办 |
 | ✨ 帖内 AI | 翻译与总结，可复制、重试，或保存到预制笔记文件夹 |
 | 🎨 外观设置 | 五种配色、亮暗主题、系统字体与 TTF/OTF 字体导入 |
+| 🤖 命令行工具 | `lck` 让本机 AI Agent（或你自己）直接读写工作台笔记、文件夹与待办 |
 
 **信息流**：各订阅独立刷新、缓存，失败保留上次内容。按原帖 URL 合并去重，默认保留已接收的近七天，可调整为 14 / 30 / 90 天。仅在进入或恢复应用、手动刷新、切换订阅来源时联网，搜索与平台筛选不触发刷新。
 
@@ -55,6 +58,21 @@ Windows 为免安装目录包，保留 EXE 同目录的 DLL 和 `data` 文件夹
 **外观与编辑**：雾蓝、松绿、暖橙、鸢紫、石墨五种配色。默认系统字体，支持导入 TTF/OTF（单文件最多 64 MiB）。环线对号用于应用图标与启动动效，支持系统减弱动效设置。
 
 当前没有账号系统、笔记云同步、后台轮询或锁屏推送。协议、保存与数据行为详见 [使用说明](docs/ai-and-notes.md)。
+
+## 命令行工具 lck
+
+`lck` 是一个单文件命令行工具（Windows x64），让本机 AI Agent 或你自己直接读写 Little Check 的工作台——笔记、文件夹、Markdown 待办。它复用应用同一套存储与原子写，与 App、局域网同步读写同一份数据，不需要额外配置。
+
+| 用途 | 例子 |
+| --- | --- |
+| 看工作台 | `lck status --json`、`lck today --json` |
+| 读与搜 | `lck note list --json`、`lck note show <ID\|关键词> --json` |
+| 回填成果 | `printf '# 标题\n正文\n' \| lck note new --folder 工作台` |
+| 待办 | `lck task list --json`、`lck task done "关键词"` |
+
+下载 `lck-windows-x64.zip` 解压后就是一个完整的 Agent skill 目录（`SKILL.md` + `bin/lck.exe` + `references/`），可直接交给支持 Agent Skill 的工具使用，也可以手动运行 `bin/lck.exe`。`bin/lck.exe --help` 列出全部命令，每个命令另有自己的 `--help`。
+
+设计上的几点：写入是纯 markdown 透传，不解析、不套模板；`note rm` 只进回收站，永久删除需要显式 `--yes`；每个命令只接受自己声明的选项，传错参数直接报错而不是静默忽略。数据目录与 App 相同（`lck status` 可查看），所以 Agent 写的内容会出现在应用里，也能通过局域网同步推到手机。
 
 ## 三步开始
 

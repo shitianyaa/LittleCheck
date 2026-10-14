@@ -1,13 +1,11 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:path_provider/path_provider.dart';
 
 import 'app.dart';
-import 'storage.dart';
 import 'custom_fonts.dart';
+import 'data_directory.dart';
+import 'storage.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,8 +22,8 @@ Future<void> main() async {
     );
   });
   try {
-    final base = await getApplicationSupportDirectory();
-    final store = LocalStore(Directory('${base.path}/LittleCheck'));
+    final location = await DataDirectoryManager.system();
+    final store = LocalStore(await location.resolve());
     await store.init();
     await loadStoredFont(store);
     runApp(LittleCheckApp(store: store));

@@ -60,6 +60,9 @@ void main() {
       final feed = jsonDecode(
         await File('server/example-feed.json').readAsString(),
       ) as Map<String, dynamic>;
+      // 示例数据的日期是写死的，把测试时钟钉在示例发布时间，避免它随日历
+      // 推进超过保留期后被 retainHistory 过滤（见 lib/feed.dart）。
+      final feedTime = feedDate((feed['items'] as List).first['published_at']);
       final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
       addTearDown(() => server.close(force: true));
       var mode = 200;
@@ -77,7 +80,7 @@ void main() {
         await request.response.close();
       });
       final endpoint = 'http://127.0.0.1:${server.port}/feed.json';
-      final client = FeedClient(store);
+      final client = FeedClient(store, now: () => feedTime);
       expect((await client.refresh(endpoint)).items, hasLength(2));
       mode = 201;
       await expectLater(
