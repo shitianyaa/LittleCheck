@@ -1,11 +1,21 @@
-Little Check 首个公开版本，提供信息流阅读、本地 Markdown 笔记与待办，以及帖内 AI 翻译和总结。
+Little Check 0.2.0 带来局域网设备同步、每日手帐统计与壁纸源管理，并首次随版本分发命令行工具 `lck`。
 
-- **Android**：多数手机选择 `android-arm64-v8a.apk`；旧款 32 位 ARM 手机选择 `android-armeabi-v7a.apk`。不确定架构或使用 x86_64 设备时选择 `android-universal.apk`，包含 ARM32、ARM64、x86_64，体积较大。三份 APK 使用同一正式签名。此前本机测试签名版本无法直接覆盖，请先导出需要保留的笔记，再卸载旧版本并安装；后续正式版本保持同一签名。
-- **Windows x64**：下载 ZIP，解压到自己选择的目录，运行 `little_check.exe`。保留同目录 DLL 和 `data` 文件夹；运行库已随包附带。笔记和设置保存在系统应用数据目录，移动程序目录不会迁移数据。
-- `SHA256SUMS.txt` 提供下载文件的 SHA-256 校验值。
+## 下载
 
-支持多个 JSON 订阅、按来源/平台筛选、七天历史合并、失败保留缓存；笔记支持文件夹、回收站、导入导出和字体导入。AI 模型需要自行配置，支持 Chat Completions、Responses、Messages。
+- **Android**：多数手机选择 `android-arm64-v8a.apk`；旧款 32 位 ARM 手机选择 `android-armeabi-v7a.apk`。不确定架构或使用 x86_64 设备时选择 `android-universal.apk`，包含 ARM32、ARM64、x86_64，体积较大。三份 APK 使用同一正式签名，可在设备支持的架构包之间切换。
+- **Windows x64**：下载 `windows-x64.zip`，解压到自己选择的目录，运行 `little_check.exe`。保留同目录 DLL 和 `data` 文件夹；运行库已随包附带。
+- **命令行工具 lck（Windows x64）**：下载 `lck-windows-x64.zip`，解压后是一个完整的 Agent skill 目录（`SKILL.md` + `bin/lck.exe` + `references/` + `LICENSE`），可直接交给支持 Agent Skill 的工具使用，也可以手动运行 `bin/lck.exe`。
+- `SHA256SUMS.txt` 提供以上全部下载文件的 SHA-256 校验值。
 
-[自定义订阅与 AI 一句话上手说明](https://github.com/shitianyaa/LittleCheck/blob/main/docs/feed-format.md) · [模板示例](https://github.com/shitianyaa/LittleCheck/blob/main/server/feed-v2.example.json) · [JSON Schema](https://github.com/shitianyaa/LittleCheck/blob/main/server/feed-v2.schema.json)
+## 本次新增
 
-无账号系统、笔记云同步、后台轮询或锁屏推送。Windows 为免安装目录包，尚未提供安装器或单文件 EXE；本次未验证干净 Windows 机器上的完整交互及所有供应商的真实 AI 调用。
+- **局域网设备同步**：Windows 开启局域网服务，Android 扫码或手动输入配对信息；HTTPS 绑定证书身份，凭据存入系统安全存储。手动双向同步笔记、待办、文件夹与回收站，查看变化后确认；冲突保留双方版本，永久删除保留标记。增加编辑保护、条件写入、中断恢复与重试。
+- **命令行工具 lck**：让本机 AI Agent 或你自己直接读写工作台——笔记、文件夹、Markdown 待办。复用应用同一套存储与原子写，与 App、局域网同步读写同一份数据。写入是纯 markdown 透传；`note rm` 只进回收站，永久删除需要显式 `--yes`。`bin/lck.exe --help` 列出全部命令。**当前仅提供 Windows x64 版本**，二进制与 skill 同版本成对发布。
+- **每日手帐统计**：记录打开、阅读、AI、笔记字数等足迹，可生成回顾笔记。
+- **壁纸源管理**：支持多个壁纸源与随机轮换。
+- **Windows 数据目录**：设置中可查看并打开当前数据目录，也可迁移到自定义空文件夹；复制逐文件校验后重启生效，旧目录保留。AI Key 与设备密钥仍留在系统安全存储，不随迁移复制。
+- 笔记新增手动刷新按钮，可重读磁盘同步外部改动，切回前台自动刷新；AI 功能设置页重构分区与提示词折叠；Windows 应用图标替换为品牌圆环对号样式。
+
+## 说明
+
+无账号系统、笔记云同步、后台轮询或锁屏推送。Windows 为免安装目录包，尚未提供安装器。`lck` 目前只有 Windows x64 版本；没有安装脚本，请只从本仓库 Release 下载，不要使用镜像站或聊天中转的地址。本次未验证干净 Windows 机器上的完整交互及所有供应商的真实 AI 调用。

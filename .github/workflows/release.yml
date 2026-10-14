@@ -39,7 +39,7 @@ jobs:
           python-version: '3.12'
       - run: flutter pub get --enforce-lockfile
       - run: flutter test --no-pub
-      - run: dart format --output=none --set-exit-if-changed lib test
+      - run: dart format --output=none --set-exit-if-changed lib test bin
       - run: flutter analyze --no-pub
       - run: python -m pip install -r server/requirements.txt
       - run: python -B -m unittest discover -s server -v
@@ -166,6 +166,50 @@ jobs:
           cache: true
       - run: flutter pub get --enforce-lockfile
       - run: flutter build windows --release --no-pub
+      - name: Build lck (workbench CLI)
+        shell: pwsh
+        run: ./bin/build_lck.ps1
+      - name: Package lck bundle
+        shell: pwsh
+        run: |
+          # 目录布局与安装后的 skill 目录一致（SKILL.md + bin/lck.exe + references/），
+          # 解压即可直接作为 skill 使用，不会出现二进制与 skill 版本错配。
+          $stage = 'build/lck-bundle'
+          if (Test-Path $stage) { Remove-Item -Recurse -Force $stage }
+          New-Item -ItemType Directory -Force "$stage/bin" | Out-Null
+          New-Item -ItemType Directory -Force "$stage/references" | Out-Null
+          Copy-Item 'build/lck/lck.exe' "$stage/bin/lck.exe"
+          Copy-Item 'skills/lck/SKILL.md' $stage
+          Copy-Item 'skills/lck/references/*.md' "$stage/references/"
+          Copy-Item 'LICENSE' $stage
+          New-Item -ItemType Directory -Force release | Out-Null
+          Compress-Archive -Path "$stage/*" -DestinationPath "release/LittleCheck-${env:LC_LABEL}-lck-windows-x64.zip"
+      - name: Verify lck bundle
+        shell: pwsh
+        run: |
+          # 逐个确认归档内容：缺件或版本错配必须在发布前失败，而不是发出去才发现。
+          $zip = "release/LittleCheck-${env:LC_LABEL}-lck-windows-x64.zip"
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $archive = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path $zip))
+          try {
+            $names = $archive.Entries | ForEach-Object { $_.FullName }
+            foreach ($required in 'bin/lck.exe', 'SKILL.md', 'LICENSE',
+                                  'references/commands.md', 'references/troubleshooting.md', 'references/workflows.md') {
+              if ($names -notcontains $required) { throw "lck bundle missing $required" }
+            }
+          } finally {
+            $archive.Dispose()
+          }
+          # 解压后跑一次版本自检，确认归档里的二进制可用且与 skill 成对。
+          $probe = 'build/lck-probe'
+          if (Test-Path $probe) { Remove-Item -Recurse -Force $probe }
+          Expand-Archive -Path $zip -DestinationPath $probe
+          $line = (& "$probe/bin/lck.exe" --version | Select-Object -First 1).Trim()
+          Write-Host "lck bundle version: $line"
+          $skillVersion = (Select-String -Path "$probe/SKILL.md" -Pattern '^version:\s*(\S+)').Matches[0].Groups[1].Value
+          if ($line -ne "lck version $skillVersion") {
+            throw "lck bundle version mismatch: binary '$line' vs skill '$skillVersion'"
+          }
       - name: Package complete Windows x64 bundle
         shell: pwsh
         run: |

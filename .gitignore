@@ -21,6 +21,5 @@ lesson/
 docs/plans/
 docs/private/
 
-# 本地 Agent CLI 工具链（暂不入库）
-bin/
-skills/
+# lck 的构建产物（源码入库，二进制只随 Release 分发）
+skills/lck/bin/
